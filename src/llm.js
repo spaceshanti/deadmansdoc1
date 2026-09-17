@@ -93,6 +93,11 @@ async function callChatCompletions(messages, { attempt = 0, useTools = true } = 
   const headers = { "Content-Type": "application/json" };
   if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
 
+  // Not every provider accepts this the same way -- Claude Sonnet 5 rejects
+  // it outright as deprecated. Omit by default; set LLM_TEMPERATURE to opt
+  // back in for a provider/model that wants it.
+  const temperature = process.env.LLM_TEMPERATURE;
+
   let res;
   try {
     res = await fetchImpl(`${baseUrl}/chat/completions`, {
@@ -102,7 +107,7 @@ async function callChatCompletions(messages, { attempt = 0, useTools = true } = 
         model,
         messages,
         ...(useTools ? { tools: TOOLS, tool_choice: "auto" } : {}),
-        temperature: 0.4,
+        ...(temperature !== undefined ? { temperature: Number(temperature) } : {}),
       }),
       ...(dispatcher ? { dispatcher } : {}),
     });
