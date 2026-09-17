@@ -120,3 +120,21 @@ alter table error_logs add column if not exists model text;
 alter table error_logs add column if not exists duration_ms integer;
 
 create index if not exists idx_error_logs_type on error_logs(error_type);
+
+-- Additive migration for databases with people rows from before upserting
+-- existed: repeated save_person calls for the same person previously
+-- created a new row every time (no conflict target to update instead), so
+-- real records have several duplicate rows per person. Keep the most
+-- recently updated row per (record_id, name) and drop the rest before the
+-- unique index below is added -- creating it against still-duplicated data
+-- would fail outright.
+delete from people p
+using people p2
+where p.record_id = p2.record_id
+  and lower(p.name) = lower(p2.name)
+  and (p2.updated_at, p2.id) > (p.updated_at, p.id);
+
+-- Case-insensitive per record: repeated save_person calls for the same
+-- person (which happen routinely -- the model re-confirms someone almost
+-- every turn) now update this row instead of creating a new one.
+create unique index if not exists idx_people_record_name_unique on people (record_id, lower(name));

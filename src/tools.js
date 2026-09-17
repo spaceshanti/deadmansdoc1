@@ -24,7 +24,7 @@ const TOOLS = [
     function: {
       name: "save_person",
       description:
-        "Record or update a person who matters to the handover: someone the family would need to contact, who holds knowledge or access, or who has a role (executor, financial advisor, etc). Call this as soon as a person is mentioned with enough detail to be useful -- do not wait until the end of the conversation.",
+        "Record or update a person who matters to the handover: someone the family would need to contact, who holds knowledge or access, or who has a role (executor, financial advisor, etc). Call this as soon as a person is mentioned with enough detail to be useful -- do not wait until the end of the conversation. Matched by name (case-insensitive) per record, so calling this again for someone already saved updates them rather than duplicating -- but only do that when you actually have something new or corrected to add, not to re-confirm what's already saved. Use the same form of their name each time (e.g. always 'Elena Chen', not 'Elena' once and 'Elena Chen' another time) so they're recognised as the same person.",
       parameters: {
         type: "object",
         properties: {

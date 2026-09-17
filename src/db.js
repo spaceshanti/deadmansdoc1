@@ -117,9 +117,28 @@ async function upsertPerson({
   notes,
 }) {
   const sql = getSql();
+  // Matched case-insensitively per record (idx_people_record_name_unique):
+  // the interviewer routinely re-confirms the same person across turns, so
+  // this merges into the existing row instead of creating a duplicate.
+  // Scalar fields prefer the new call's value but fall back to what's
+  // already there if this call didn't mention it (a sparser follow-up
+  // shouldn't erase previously-known detail); roles replace only when the
+  // new call actually provided some; contact_details merges key-by-key via
+  // jsonb `||`, so a call that only gives a phone number doesn't blank out
+  // an email learned earlier.
   const rows = await sql(
     `insert into people (record_id, name, relationship, roles, scope_of_authority, what_they_hold_or_oversee, contact_details, is_reachable, notes)
      values ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+     on conflict (record_id, lower(name))
+     do update set
+       relationship = coalesce(excluded.relationship, people.relationship),
+       roles = case when array_length(excluded.roles, 1) > 0 then excluded.roles else people.roles end,
+       scope_of_authority = coalesce(excluded.scope_of_authority, people.scope_of_authority),
+       what_they_hold_or_oversee = coalesce(excluded.what_they_hold_or_oversee, people.what_they_hold_or_oversee),
+       contact_details = people.contact_details || excluded.contact_details,
+       is_reachable = coalesce(excluded.is_reachable, people.is_reachable),
+       notes = coalesce(excluded.notes, people.notes),
+       updated_at = now()
      returning *`,
     [
       recordId,
