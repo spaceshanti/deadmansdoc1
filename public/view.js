@@ -166,9 +166,126 @@
       .join("");
   }
 
+  // Evaluation
+  let lastEvaluation = null;
+  const evaluateBtn = document.getElementById("evaluate-btn");
+  const evaluateStatus = document.getElementById("evaluate-status");
+  const evaluateError = document.getElementById("evaluate-error");
+  const evaluationResults = document.getElementById("evaluation-results");
+  const hideCoveredCheckbox = document.getElementById("hide-covered");
+
+  const STATUS_BADGE_CLASS = { satisfied: "role", not_applicable: "muted-badge", missing: "warn" };
+  const STATUS_LABEL = { satisfied: "satisfied", not_applicable: "not applicable", missing: "missing" };
+
+  function renderEvaluationSummary(summary) {
+    document.getElementById("evaluation-summary").innerHTML = `
+      <dt>Overall</dt><dd>${summary.covered} / ${summary.total} covered (${summary.completionPct}%)</dd>
+      <dt>v1 priority sections</dt><dd>${summary.coveredV1} / ${summary.v1Total} covered (${summary.v1CompletionPct}%)</dd>
+      <dt>Satisfied</dt><dd>${summary.byStatus.satisfied}</dd>
+      <dt>Not applicable</dt><dd>${summary.byStatus.not_applicable}</dd>
+      <dt>Missing</dt><dd>${summary.byStatus.missing}</dd>
+    `;
+  }
+
+  function applyEvaluationFilter() {
+    if (!lastEvaluation) return;
+    const hideCovered = hideCoveredCheckbox.checked;
+
+    const bySection = {};
+    for (const r of lastEvaluation.results) {
+      if (hideCovered && r.status !== "missing") continue;
+      const key = r.section;
+      bySection[key] = bySection[key] || { title: r.sectionTitle, items: [] };
+      bySection[key].items.push(r);
+    }
+
+    const sectionKeys = Object.keys(bySection).sort((a, b) => Number(a) - Number(b));
+    document.getElementById("evaluation-sections").innerHTML = sectionKeys.length
+      ? sectionKeys
+          .map((key) => {
+            const { title, items } = bySection[key];
+            const bySub = {};
+            for (const item of items) {
+              const subKey = item.subsection || "";
+              bySub[subKey] = bySub[subKey] || [];
+              bySub[subKey].push(item);
+            }
+            const subBlocks = Object.entries(bySub)
+              .map(
+                ([subKey, subItems]) => `
+                  ${subKey ? `<p class="muted" style="margin: 0.5rem 0 0.25rem;">${esc(subKey)}</p>` : ""}
+                  <div class="data-list">
+                    ${subItems
+                      .map(
+                        (item) => `
+                        <article class="data-card">
+                          <h3 style="font-size: 0.92rem;">
+                            ${esc(item.field)}
+                            ${badge(STATUS_LABEL[item.status], STATUS_BADGE_CLASS[item.status])}
+                            ${badge(item.level, "muted-badge")}
+                            ${item.v1 ? badge("v1", "role") : ""}
+                          </h3>
+                          ${item.reason ? `<p class="muted">${esc(item.reason)}</p>` : ""}
+                        </article>
+                      `
+                      )
+                      .join("")}
+                  </div>
+                `
+              )
+              .join("");
+            return `
+              <section class="category-block">
+                <h3>Section ${esc(key)} — ${esc(title)}</h3>
+                ${subBlocks}
+              </section>
+            `;
+          })
+          .join("")
+      : `<p class="empty-note">${hideCovered ? "Nothing missing -- everything is satisfied or marked not applicable." : "No results."}</p>`;
+  }
+
+  hideCoveredCheckbox.addEventListener("change", applyEvaluationFilter);
+
+  evaluateBtn.addEventListener("click", async () => {
+    if (!lastViewData) return;
+    evaluateError.hidden = true;
+    evaluateBtn.disabled = true;
+    evaluateStatus.textContent = "Running (this reads the whole record and conversation -- can take 15-30s)...";
+
+    try {
+      const res = await fetch("/api/evaluate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resumeCode: lastViewData.record.resumeCode }),
+      });
+      const body = await res.json();
+      if (!res.ok) {
+        evaluateError.textContent = body.error || "Couldn't run the evaluation.";
+        evaluateError.hidden = false;
+        evaluationResults.hidden = true;
+        return;
+      }
+      lastEvaluation = body;
+      renderEvaluationSummary(body.summary);
+      applyEvaluationFilter();
+      evaluationResults.hidden = false;
+      evaluateStatus.textContent = "";
+    } catch {
+      evaluateError.textContent = "Couldn't reach the server. Please try again.";
+      evaluateError.hidden = false;
+    } finally {
+      evaluateBtn.disabled = false;
+    }
+  });
+
   async function load(resumeCode) {
     errorEl.hidden = true;
     results.hidden = true;
+    lastEvaluation = null;
+    evaluationResults.hidden = true;
+    evaluateStatus.textContent = "";
+    evaluateError.hidden = true;
     try {
       const res = await fetch("/api/view", {
         method: "POST",

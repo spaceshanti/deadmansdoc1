@@ -42,6 +42,26 @@
       </section>
 
       <section class="card data-section">
+        <h2>Completeness check</h2>
+        <p class="lede-note">
+          Checks what's been collected against the information the final document is expected to
+          need. This doesn't stop or gate the interview -- more can always be added, complete or not.
+        </p>
+        <button id="evaluate-btn" type="button">Run evaluation</button>
+        <span id="evaluate-status" class="muted" style="margin-left: 0.6rem; font-size: 0.85rem;"></span>
+
+        <div id="evaluation-results" hidden style="margin-top: 1rem;">
+          <div id="evaluation-summary" class="kv" style="margin-bottom: 1rem;"></div>
+          <label class="choice" style="margin-bottom: 0.75rem;">
+            <input type="checkbox" id="hide-covered" checked />
+            <span>Only show missing items</span>
+          </label>
+          <div id="evaluation-sections"></div>
+        </div>
+        <p id="evaluate-error" class="error" hidden></p>
+      </section>
+
+      <section class="card data-section">
         <h2>Conversation <span class="count" id="messages-count"></span></h2>
         <label class="choice" style="margin-bottom: 0.75rem;">
           <input type="checkbox" id="show-tool-calls" checked />

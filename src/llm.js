@@ -88,7 +88,7 @@ function llmError({ status, bodyText, provider, model, errorType }) {
 // Small providers on free tiers (e.g. Groq's default per-minute token cap)
 // return 429s under completely normal use, not just abuse -- worth one
 // short retry so it doesn't surface to the user as a broken app.
-async function callChatCompletions(messages, attempt = 0) {
+async function callChatCompletions(messages, { attempt = 0, useTools = true } = {}) {
   const { baseUrl, apiKey, model } = getConfig();
   const headers = { "Content-Type": "application/json" };
   if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
@@ -101,8 +101,7 @@ async function callChatCompletions(messages, attempt = 0) {
       body: JSON.stringify({
         model,
         messages,
-        tools: TOOLS,
-        tool_choice: "auto",
+        ...(useTools ? { tools: TOOLS, tool_choice: "auto" } : {}),
         temperature: 0.4,
       }),
       ...(dispatcher ? { dispatcher } : {}),
@@ -123,7 +122,7 @@ async function callChatCompletions(messages, attempt = 0) {
         /* fall back to default wait */
       }
       await sleep(waitMs);
-      return callChatCompletions(messages, attempt + 1);
+      return callChatCompletions(messages, { attempt: attempt + 1, useTools });
     }
     throw llmError({ status: res.status, bodyText: text, provider: baseUrl, model });
   }
@@ -199,4 +198,31 @@ async function runInterviewTurn({ recordId, systemPrompt, history, userMessage }
   };
 }
 
-module.exports = { runInterviewTurn };
+/**
+ * A single plain completion with no tool calling -- for tasks like the
+ * completeness evaluation, which just needs the model to read data and
+ * return text (JSON, by convention of the caller's prompt), not act on
+ * anything. Reuses the same retry/error-classification/timeout handling as
+ * the interview path.
+ */
+async function runPlainCompletion({ systemPrompt, userMessage }) {
+  const messages = [
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userMessage },
+  ];
+  const completion = await callChatCompletions(messages, { useTools: false });
+  const choice = completion.choices && completion.choices[0];
+  if (!choice) {
+    const { baseUrl, model } = getConfig();
+    throw llmError({
+      status: null,
+      bodyText: "LLM returned no choices",
+      provider: baseUrl,
+      model,
+      errorType: "unexpected_response",
+    });
+  }
+  return choice.message.content || "";
+}
+
+module.exports = { runInterviewTurn, runPlainCompletion };

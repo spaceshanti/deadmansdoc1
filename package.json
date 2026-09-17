@@ -4,7 +4,7 @@
   "private": true,
   "description": "AI-driven interview that collects handover information (contacts, accounts, processes) for a later agent to turn into a document. Prototype only — no document generation here.",
   "scripts": {
-    "build": "node scripts/build-question-bank.js",
+    "build": "node scripts/build-question-bank.js && node scripts/build-evaluation-criteria.js",
     "dev": "npm run build && netlify dev",
     "db:migrate": "node db/migrate.js"
   },
