@@ -247,6 +247,36 @@ button[type="submit"]:hover { opacity: 0.92; }
   margin: 0 0 0.9rem;
 }
 
+.data-section summary {
+  cursor: pointer;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.data-section summary::-webkit-details-marker { display: none; }
+
+.data-section summary::before {
+  content: "\25b8";
+  display: inline-block;
+  color: var(--muted);
+  font-size: 0.75rem;
+  transition: transform 0.15s ease;
+}
+
+.data-section[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.data-section summary h2 {
+  margin: 0;
+}
+
+.data-section[open] summary {
+  margin-bottom: 0.9rem;
+}
+
 .count { color: var(--muted); font-weight: 400; font-size: 0.85rem; }
 
 .kv {

@@ -31,18 +31,18 @@
     </div>
 
     <div id="results" hidden>
-      <section class="card data-section">
-        <h2>Record</h2>
+      <details class="card data-section" open>
+        <summary><h2>Record</h2></summary>
         <dl class="kv" id="record-summary"></dl>
         <button id="download-btn" type="button" style="margin-top: 1rem;">Download everything (JSON)</button>
         <p class="lede-note" style="margin-top: 0.5rem;">
           Record, people, facts, gaps, and the full conversation transcript, in one file --
           for handing off to another agent or system to work from.
         </p>
-      </section>
+      </details>
 
-      <section class="card data-section">
-        <h2>Completeness check</h2>
+      <details class="card data-section" open>
+        <summary><h2>Completeness check</h2></summary>
         <p class="lede-note">
           Checks what's been collected against the information the final document is expected to
           need. This doesn't stop or gate the interview -- more can always be added, complete or not.
@@ -59,35 +59,35 @@
           <div id="evaluation-sections"></div>
         </div>
         <p id="evaluate-error" class="error" hidden></p>
-      </section>
+      </details>
 
-      <section class="card data-section">
-        <h2>Conversation <span class="count" id="messages-count"></span></h2>
+      <details class="card data-section" open>
+        <summary><h2>Conversation <span class="count" id="messages-count"></span></h2></summary>
         <label class="choice" style="margin-bottom: 0.75rem;">
           <input type="checkbox" id="show-tool-calls" checked />
           <span>Show tool calls (what got saved, inline)</span>
         </label>
         <div id="conversation" class="messages" style="height: auto; max-height: 32rem; border: 1px solid var(--line); border-radius: 10px; padding: 0.75rem;"></div>
         <p class="empty-note" id="messages-empty" hidden>No conversation yet.</p>
-      </section>
+      </details>
 
-      <section class="card data-section">
-        <h2>People <span class="count" id="people-count"></span></h2>
+      <details class="card data-section" open>
+        <summary><h2>People <span class="count" id="people-count"></span></h2></summary>
         <div id="people-list" class="data-list"></div>
         <p class="empty-note" id="people-empty" hidden>No one recorded yet.</p>
-      </section>
+      </details>
 
-      <section class="card data-section">
-        <h2>Facts <span class="count" id="facts-count"></span></h2>
+      <details class="card data-section" open>
+        <summary><h2>Facts <span class="count" id="facts-count"></span></h2></summary>
         <div id="facts-list"></div>
         <p class="empty-note" id="facts-empty" hidden>No facts recorded yet.</p>
-      </section>
+      </details>
 
-      <section class="card data-section">
-        <h2>Gaps <span class="count" id="gaps-count"></span></h2>
+      <details class="card data-section" open>
+        <summary><h2>Gaps <span class="count" id="gaps-count"></span></h2></summary>
         <div id="gaps-list" class="data-list"></div>
         <p class="empty-note" id="gaps-empty" hidden>No gaps flagged yet.</p>
-      </section>
+      </details>
     </div>
   </main>
 
